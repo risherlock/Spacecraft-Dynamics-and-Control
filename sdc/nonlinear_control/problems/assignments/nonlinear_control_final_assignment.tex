@@ -1,0 +1,200 @@
+\documentclass{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{amsmath, amssymb, bm}
+\usepackage[dvipsnames]{xcolor}
+
+\setlength{\parskip}{2pt}
+
+\title{Final Assignment of\\Control of Nonlinear Spacecraft Attitude Motion}
+\author{Rishav}
+\date{March 10, 2023}
+
+\begin{document}
+\maketitle
+
+\newpage
+\section{Problem 1}
+Consider a rigid spacecraft with a general inertia matrix $[\bm{I}]$. The attitude is controlled using a set of continuously variable thrusters which produce a torque $\bm{u}$ about the spacecraft center of mass. The attitude is measured using a set of modified Rodrigues parameters $\bm{\sigma}_{\mathcal{B}/\mathcal{N}}$.
+
+\subsection*{Part A}
+Using Lyapunov's direct method, develop a globally stabilizing feedback control law to bring both the inertial attitude $\bm{\sigma}_{\mathcal{B}/\mathcal{N}}$ and angular rates $\bm{\omega}_{\mathcal{B}/\mathcal{N}}$ relative to an inertial orientation $\mathcal{N}$ to zero (regulator problem). Show all work, including how to differentiate the Lyapunov function term involving $\bm{\sigma}_{\mathcal{B}/\mathcal{N}}$.
+
+\paragraph{\textcolor{orange}{Solution:}}
+The goal is to control both attitude MRP $\bm{\sigma}$ and angular rates $\bm{\omega}$ of the spacecraft, so let us define a proper Lyapunov candidate function $V$\footnote{The given problem is a regulation problem so we can drop the subscript $\mathcal{B}/\mathcal{N}$ because there are no other frames (like reference frame $\mathcal{R}$ in tracking problem) to distinguish vectors from.}. 
+
+$$
+V(\bm{\sigma},\bm{\omega})=2\ln{(1+\bm{\sigma}^{\intercal}\bm{\sigma})}+\frac{1}{2}\bm{\omega}^{\intercal}[\bm{I}]\bm{\omega} 
+$$
+
+The $V(\bm{\sigma},\bm{\omega})$ is both positive definite and radially unbounded which makes it a good Lyapunov candidate to argue global asymptotic stability. Time derivative of $V$ is computed as
+
+\begin{equation}
+  \label{eqn_vdot}
+  \dot{V}(\bm{\sigma},\bm{\omega})=\frac{\partial V(\bm{\sigma},\bm{\omega})}{\partial\bm{\sigma}}\dot{\bm{\sigma}}+\frac{\partial V(\bm{\sigma},\bm{\omega})}{\partial\bm{\omega}}\dot{\bm{\omega}}.  
+\end{equation}
+
+Individually expanding the two terms gives us
+\begin{equation}
+  \label{eqn_vdot_sigma}
+  \begin{split}
+    \frac{\partial V(\bm{\sigma},\bm{\omega})}{\partial\bm{\sigma}}\dot{\bm{\sigma}}&=\frac{4K}{1+\sigma^{2}}\bm{\sigma}^{\intercal}\dot{\bm{\sigma}}\\
+    &=\frac{4K}{1+\sigma^{2}}\bm{\sigma}^{\intercal}\frac{1}{4}\left((1-\sigma^{2})[\bm{I}_{3\times3}]+2[\tilde{\bm{\sigma}}]+2\bm{\sigma}\bm{\sigma}^{\intercal}\right)\bm{\omega}\\
+    &=\frac{K}{1+\sigma^{2}}\left((1-\sigma^{2})\bm{\sigma}^{\intercal}[\bm{I}_{3\times3}]+2\bm{\sigma}^{\intercal}[\tilde{\bm{\sigma}}]+2\bm{\sigma}^{\intercal}\bm{\sigma}\bm{\sigma}^{\intercal}\right)\bm{\omega}\\
+    &=\frac{K}{1+\sigma^{2}}\left((1-\sigma^{2})\bm{\sigma}^{\intercal}-2[\tilde{\bm{\sigma}}]\bm{\sigma}+2\sigma^{2}\bm{\sigma}^{\intercal}\right)\bm{\omega}\quad\because[\tilde{\bm{\sigma}}]^{\intercal}=-[\tilde{\bm{\sigma}}]\\
+    &=\frac{K}{1+\sigma^{2}}\left(\bm{\sigma}^{\intercal}-\sigma^{2}\bm{\sigma}^{\intercal}-2\bm{\sigma}\times\bm{\sigma}+2\sigma^{2}\bm{\sigma}^{\intercal}\right)\bm{\omega}\\
+    &=\frac{K}{1+\sigma^{2}}\left(\bm{\sigma}^{\intercal}+\sigma^{2}\bm{\sigma}^{\intercal}\right)\bm{\omega}\\
+    &=\frac{K}{1+\sigma^{2}}\bm{\sigma}^{\intercal}\left(1+\sigma^{2}\right)\bm{\omega}\\
+    &=K\bm{\sigma}^{\intercal}\bm{\omega}\\
+  \end{split}
+\end{equation}
+
+and
+
+\begin{equation}
+  \label{eqn_vdot_omega}
+  \begin{split}
+    \frac{\partial V(\bm{\sigma},\bm{\omega})}{\partial\bm{\omega}}\dot{\bm{\omega}}&=\frac{1}{2}\frac{\partial \bm{\omega}^{\intercal}[\bm{I}]\bm{\omega}}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=\bm{\omega}^{\intercal}[\bm{I}]\dot{\bm{\omega}}.\quad\quad\quad\because\frac{\partial}{\partial\bm{x}}(\bm{x}^{\intercal}[\bm{M}]\bm{x})=2\bm{x}^{\intercal}[\bm{M}]
+  \end{split}
+\end{equation}
+
+Plugging in Eqn.(\ref{eqn_vdot_sigma}) and Eqn.(\ref{eqn_vdot_omega}) into Eqn.(\ref{eqn_vdot}) gives
+
+\begin{equation}
+  \label{eqn_vdot_final}
+  \begin{split}
+    \dot{V}&=K\bm{\sigma}^{\intercal}\bm{\omega}+\bm{\omega}^{\intercal}[\bm{I}]\dot{\bm{\omega}}\\
+    &=\bm{\omega}^{\intercal}K\bm{\sigma}+\bm{\omega}^{\intercal}[\bm{I}]\dot{\bm{\omega}}\\
+    &=\bm{\omega}^{\intercal}(K\bm{\sigma}+[\bm{I}]\dot{\bm{\omega}})\\
+    &=-\bm{\omega}^{\intercal}[\bm{P}]\bm{\omega}\quad\quad\text{ where, }K\bm{\sigma}+[\bm{I}]\dot{\bm{\omega}}=[\bm{P}]\bm{\omega}\text{ where, }[\bm{P}]\succ0.
+  \end{split}
+\end{equation}
+
+ Above substitution leads to following stability constraint.
+
+\begin{equation}
+  \label{eqn_stability_constraint}
+ [\bm{I}]\dot{\bm{\omega}} + K\bm{\sigma} + [\bm{P}]\bm{\omega} = 0
+\end{equation}
+
+This equation shows linear closed loop response of $\bm{\omega}$ and it allows us to predict response of $\bm{\omega}$ for given control gains $K$ and $[\bm{P}]$. This can prove very useful in control design. Now we can expand the system dynamics $-[\bm{I}]\dot{\bm{\omega}}=[\tilde{\bm{\omega}}][\bm{I}]\bm{\omega} + \bm{u}$ on Eqn.(\ref{eqn_stability_constraint}) to solve for control $\bm{u}$.
+
+\begin{equation}
+  \label{eqn_control_law}
+  \bm{u}=-K\bm{\sigma}-[\bm{P}]\bm{\omega}+[\tilde{\bm{\omega}}][\bm{I}]\bm{\omega}  
+\end{equation}
+
+Eqn.(\ref{eqn_vdot_final}) confirms $\dot{V}(\bm{\omega})$ to be positive definite for $\bm{\omega}$ but not $\bm{\sigma}$. $\dot{V}(\bm{\sigma},\bm{\omega})=0$ for $\bm{\omega}=0$ and arbitrary $\bm{\sigma}$ implies $\dot{V}(\bm{\sigma},\bm{\omega})\preceq0$. Lyapunov analysis does not allow us to argue asymptotic stability if the derivative is not negative definite.
+
+Hence, we arrive to the limitation of Lyapunov analysis which does not allow us to proceed further to our goal. 
+
+\subsection*{Part B}
+Analytically prove that this control is globally asymptotically stabilizing.
+
+\paragraph{\textcolor{orange}{Solution:}}
+
+Mukherjee-Chen method allows us to explore the problem further from the dead end due to Lyapunov analysis. Hence, taking the second and third derivative of Lyapunov function.
+
+\begin{equation}
+  \begin{split}
+    \ddot{V}&=\frac{\partial\dot{V}}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=\frac{\partial\left(-\bm{\omega}^{\intercal}[\bm{P}]\bm{\omega}\right)}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=-2\bm{\omega}^{\intercal}[\bm{P}]\dot{\bm{\omega}}\\
+  \end{split}
+\end{equation}
+
+\begin{equation}
+  \begin{split}
+    \dddot{V}&=\frac{\partial\ddot{V}}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=\frac{\partial\left(-2\bm{\omega}^{\intercal}[\bm{P}]\dot{\bm{\omega}}\right)}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=-2\frac{\partial\left(\dot{\bm{\omega}}^{\intercal}[\bm{P}]\bm{\omega}\right)}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=-2\dot{\bm{\omega}}^{\intercal}[\bm{P}]\dot{\bm{\omega}}\\
+  \end{split}
+\end{equation}
+
+We see that $\ddot{V}=0$ for the set of states where $\dot{V}=0$. To establish the system to be globally asymptotically stable, we should prove that $\dddot{V}\prec0$ for the same set. From Eqn.(\ref{eqn_stability_constraint}), $\dot{\bm{\omega}}\neq\bm{0}$ for the set where $\bm{\omega}=\bm{0}$ and $\bm{\sigma}\neq\bm{0}$ so the above quadratic form easily helps us assert that $\dddot{V}\prec0$ for the set where $\dot{V}=0$. Hence the control $\bm{u}$ in Eqn.(\ref{eqn_control_law}) is globally stabilizing feedback control law for the given regulation problem.
+
+\newpage
+\section{Problem 2}
+Consider the spacecraft attitude control problem where a severe spin is to be arrested.  The goal of your control is to drive the body angular rates $\bm{\omega}_{\mathcal{B}/\mathcal{N}} \rightarrow \bm{0}$.  The final attitude is irrelevant, we are just happy to stop tumbling end over end.   Assume no external torques are present.
+
+\subsection*{Part A}
+Assuming a continuous control torque (without saturation), develop a globally asymptotically stabilizing control. Analytically prove these properties.
+
+\paragraph{\textcolor{orange}{Solution:}}
+Since we are interested in the regulation of angular rates only, the rotational kinetic energy is a natural Lyapunov candidate which is positive definite as well as radially unbounded.
+
+$$
+V(\bm{\omega})=\frac{1}{2}\bm{\omega}^{\intercal}[\bm{I}]\bm{\omega}\succ0
+$$
+
+Taking the time derivative, we arrive at
+
+\begin{equation}
+  \begin{split}
+    \dot{V}(\bm{\omega})&=\frac{\partial V(\bm{\omega})}{\partial\bm{\omega}}\dot{\bm{\omega}}\\
+    &=\bm{\omega}^{\intercal}[\bm{I}]\dot{\bm{\omega}}\\
+    &=-\bm{\omega}^{\intercal}[\bm{P}]\bm{\omega}\text{ where, }[\bm{P}]\succ0.\\
+  \end{split}
+\end{equation}
+
+With $[\bm{P}]\bm{\omega}$ $\dot{V}(\bm{\omega})\prec0$.
+
+We can use above substitution to solve for control $\bm{u}$.
+
+\begin{equation}
+  \label{eqn_detumble_control_law}
+  \begin{split}
+    [\bm{I}]\dot{\bm{\omega}}&=[\bm{P}]\bm{\omega}\\ 
+    \implies\bm{u}&=[\bm{P}]\bm{\omega}+[\tilde{\bm{\omega}}][\bm{I}]\bm{\omega}\\
+  \end{split}
+\end{equation}
+
+Since $V(\bm{\omega})\succ0$, $\dot{V}(\bm{\omega})\prec0$, and $V(\bm{\omega})\rightarrow\infty$ as $|\bm{\omega}|\rightarrow\infty$, above control is globally asymptotically stable to rate control.
+
+\subsection*{Part B}
+Next, assume that the control torque magnitudes are limited to be either 0 or $\pm u_{\text{max}}$.  Develop a pure Lyapunov optimal control which will stop the spin. Analytically show that this control is globally asymptotically stabilizing.
+
+\paragraph{\textcolor{orange}{Solution:}}
+Eqn.(\ref{eqn_detumble_control_law}) is good but there is a problem with practical implementation. $\bm{u}$ is proportional to $\bm{\omega}$ so that for very high angular rates, $\bm{u}$ is proportionally high. However, practical actuators used in the satellite cannot provide arbitrary amount of torque because it has limited control torque capability. So in practical implementation, the actuator cannot provide the control torque output by this control law.
+
+Above problem asks for the solution that takes into account the limited control capability of the actuators and that is where Lyapunov optimal control comes into play. A control law is said to be Lyapunov optimal if it makes $\dot{V}(\bm{\omega})$ as negatively small as possible. More precisely, the Lyapunov optimal control should minimize the performance index function
+
+$$
+J = \dot{V}(\bm{\omega})=\sum_{i=1}^{3}\omega_{i}u_{i}
+$$
+
+where $\bm{u}=[u_{1},u_{2},u_{3}]^{\intercal}$ and $\bm{\omega}=[\omega_{1},\omega_{2},\omega_{3}]^{\intercal}$. In case of the limited control, following control law produces the minimum value of $J$.
+
+\begin{equation}
+  \label{eqn_saturation_control}
+  u_{i}=-\bar{u}_{i}\,\text{sgn}(\omega_{i})  
+\end{equation}
+
+
+where $\bar{u}_{i}$ are the components of maximum control efforts along each coordinate axes (i.e.$\bm{u}_{\text{max}}=\bar{\bm{b}}=[\bar{u}_{1},\bar{u}_{2},\bar{u}_{3}]^{\intercal}$). Substituting these control to above performance index function gives
+
+$$
+J=\dot{V}(\bm{\omega})=-\sum_{i=1}^{3}\bar{u}_{i}\,\omega_{i}\,\text{sgn}(\omega_{i}).
+$$
+
+Since maximum control $\bar{\bm{u}}$ is applied and all the components of $J$ are strictly negative, the control $u_{i}$ guarantees $J$ to have most negative value. Hence  $u_{i}$ guarantees Lyapunov optimal control.
+
+\subsection*{Stability of Lyapunov optimal control}
+
+\subsection*{Part C}
+How can this Lyapunov optimal control be modified to avoid chatter issues around the zero rate condition?  Analytically discuss the stability of this modified control implementation.
+
+\paragraph{\textcolor{orange}{Solution:}} This Lyapunov control can be modified to avoid chatter issues around the zero rate condition by the combination of controls developed in Eqn.(\ref{eqn_detumble_control_law}) and Eqn.(\ref{eqn_saturation_control}). Let us assume the control law in Eqn.(\ref{eqn_detumble_control_law}) by $\tilde{\bm{u}}$.
+
+\begin{equation}
+  \bm{u}= 
+  \begin{cases}
+    \tilde{u}_{i}&\text{ for }|\tilde{u}_{i}|\leq\bar{u}_{i}\\
+    -\bar{u}_{i}\,\text{sgn}(\omega_{i})&\text{ for }|\tilde{u}_{i}|>\bar{u}_{i}
+  \end{cases}
+\end{equation}
+
+This control law avoids chatter while taking into account the saturation of actuator.
+
+\end{document}
